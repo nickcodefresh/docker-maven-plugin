@@ -17,10 +17,7 @@
 
 package net.wouterdanes.docker.provider.model;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import net.wouterdanes.docker.remoteapi.model.ContainerLink;
 
@@ -29,7 +26,7 @@ import net.wouterdanes.docker.remoteapi.model.ContainerLink;
  * href="http://docs.docker.io/reference/api/docker_remote_api_v1.10/#21-containers">
  * http://docs.docker.io/reference/api/docker_remote_api_v1.10/#start-a-container</a>
  */
-public class ContainerStartConfiguration {
+public class ContainerStartConfiguration implements Cloneable {
 
     public static final int DEFAULT_STARTUP_TIMEOUT = 5 * 60;
 
@@ -54,51 +51,98 @@ public class ContainerStartConfiguration {
     private String hostname;
 
     /**
-     * Set the image name or id to use and returns the object so you can chain from/with statements.
+     * Whether this container should be started as "privileged" 
+     */
+    private boolean privileged = false;
+
+    /**
+     * Set the image name or id to use and returns a new object so you can chain from/with statements.
      *
      * @param image the image name or id
-     * @return this object
+     * @return a new {@link net.wouterdanes.docker.provider.model.ContainerStartConfiguration} object with the image 
+     *  name set
      */
     public ContainerStartConfiguration fromImage(String image) {
-        this.image = image;
-        return this;
+        ContainerStartConfiguration copy = copy();
+        copy.image = image;
+        return copy;
     }
 
+    /**
+     * Set the image id to use and returns a new object so you can chain from/with statements.
+     * @param id the image id 
+     * @return a new {@link net.wouterdanes.docker.provider.model.ContainerStartConfiguration} object with the image 
+     *  id set
+     */
     public ContainerStartConfiguration withId(String id) {
-        this.id = id;
-        return this;
+        ContainerStartConfiguration copy = copy();
+        copy.id = id;
+        return copy;
     }
 
+    /**
+     * Adds the passed links and returns a new object containing the links
+     * @param links the links to add
+     * @return a new {@link net.wouterdanes.docker.provider.model.ContainerStartConfiguration} object with the links
+     *  set
+     */
     public ContainerStartConfiguration withLinks(ContainerLink... links) {
-        if (this.links == null) {
-            this.links = new ArrayList<>(links.length);
+        ContainerStartConfiguration copy = copy();
+        if (copy.links == null) {
+            copy.links = new ArrayList<>(links.length);
         }
-        Collections.addAll(this.links, links);
-        return this;
+        Collections.addAll(copy.links, links);
+        return copy;
     }
 
+    /**
+     * Adds the link and returns a new object containing the link
+     * @param link the links to add
+     * @return a new {@link net.wouterdanes.docker.provider.model.ContainerStartConfiguration} object with the link set
+     */
     public ContainerStartConfiguration withLink(ContainerLink link) {
         return withLinks(link);
     }
 
+    /**
+     * Tells the provider to wait for the container to start by checking or a regex in the docker logs  
+     * @param pattern The regex to check for
+     * @return a new {@link net.wouterdanes.docker.provider.model.ContainerStartConfiguration} object with the 
+     *  waitForStartup set
+     */
     public ContainerStartConfiguration waitForStartup(String pattern) {
-        this.waitForStartup = pattern;
-        return this;
+        ContainerStartConfiguration copy = copy();
+        copy.waitForStartup = pattern;
+        return copy;
     }
 
+    /**
+     * Sets the startup timeout and returns a new object
+     * @param timeout the startup timeout in seconds
+     * @return a new {@link net.wouterdanes.docker.provider.model.ContainerStartConfiguration} object with the timeout set
+     */
     public ContainerStartConfiguration withStartupTimeout(int timeout) {
-        this.startupTimeout = timeout;
-        return this;
+        ContainerStartConfiguration copy = copy();
+        copy.startupTimeout = timeout;
+        return copy;
     }
 
     public ContainerStartConfiguration withEnv(Map<String, String> env) {
-    	this.env = env;
-    	return this;
+        ContainerStartConfiguration copy = copy();
+        copy.env = env;
+    	return copy;
     }
 
     public ContainerStartConfiguration withHostname(String hostname) {
-        this.hostname = hostname;
-        return this;
+        ContainerStartConfiguration copy = copy();
+        copy.hostname = hostname;
+        return copy;
+    }
+    
+    public ContainerStartConfiguration asPrivileged() {
+        ContainerStartConfiguration copy = copy();
+        copy.privileged = true;
+        return copy;
     }
     
     public String getImage() {
@@ -127,5 +171,32 @@ public class ContainerStartConfiguration {
 
     public int getStartupTimeout() {
         return startupTimeout != 0 ? startupTimeout : DEFAULT_STARTUP_TIMEOUT;
+    }
+
+    public boolean isPrivileged() {
+        return privileged;
+    }
+
+    public ContainerStartConfiguration copy() {
+        try {
+            return clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException("Clone went wrong, this is an internal error.", e);
+        }
+    }
+
+    @Override
+    protected ContainerStartConfiguration clone() throws CloneNotSupportedException {
+        ContainerStartConfiguration clone = (ContainerStartConfiguration) super.clone();
+        // ContainerLink is immutable, so no need to deep copy
+        if (clone.links != null) {
+            clone.links = new ArrayList<>(clone.links);
+        }
+        // Env is a Map<String, String>, so the values are immutable
+        if (clone.env != null) {
+            clone.env = new HashMap<>(clone.env);
+        }
+
+        return clone;
     }
 }

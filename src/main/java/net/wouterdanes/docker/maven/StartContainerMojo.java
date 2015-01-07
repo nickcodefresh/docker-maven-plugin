@@ -75,7 +75,7 @@ public class StartContainerMojo extends AbstractPreVerifyDockerMojo {
             return;
         }
         DockerProvider provider = getDockerProvider();
-        for (ContainerStartConfiguration configuration : containers) {
+        for (final ContainerStartConfiguration configuration : containers) {
             for (ContainerLink link : configuration.getLinks()) {
                 String linkedContainerId = link.getContainerId();
                 ContainerStartConfiguration startConfiguration = getContainerStartConfiguration(linkedContainerId);
@@ -83,18 +83,18 @@ public class StartContainerMojo extends AbstractPreVerifyDockerMojo {
                     waitForContainerToFinishStartup(startConfiguration);
                 }
             }
-            replaceImageWithBuiltImageIdIfInternalId(configuration);
-            replaceLinkedContainerIdsWithStartedNames(configuration);
+            ContainerStartConfiguration parsedConfiguration = replaceImageWithBuiltImageIdIfInternalId(configuration);
+            replaceLinkedContainerIdsWithStartedNames(parsedConfiguration);
             try {
-                getLog().info(String.format("Starting container '%s'..", configuration.getId()));
-                ContainerInspectionResult container = provider.startContainer(configuration);
+                getLog().info(String.format("Starting container '%s'..", parsedConfiguration.getId()));
+                ContainerInspectionResult container = provider.startContainer(parsedConfiguration);
                 String containerId = container.getId();
                 List<ExposedPort> exposedPorts = provider.getExposedPorts(containerId);
-                exposePortsToProject(configuration, exposedPorts);
+                exposePortsToProject(parsedConfiguration, exposedPorts);
                 getLog().info(String.format("Started container with id '%s'", containerId));
-                registerStartedContainer(configuration.getId(), container);
+                registerStartedContainer(parsedConfiguration.getId(), container);
             } catch (DockerException e) {
-                String message = String.format("Failed to start container '%s'", configuration.getId());
+                String message = String.format("Failed to start container '%s'", parsedConfiguration.getId());
                 handleDockerException(message, e);
             }
         }
@@ -199,11 +199,9 @@ public class StartContainerMojo extends AbstractPreVerifyDockerMojo {
         }
     }
 
-    private void replaceImageWithBuiltImageIdIfInternalId(ContainerStartConfiguration configuration) {
+    private ContainerStartConfiguration replaceImageWithBuiltImageIdIfInternalId(ContainerStartConfiguration configuration) {
         Optional<BuiltImageInfo> builtImage = getBuiltImageForStartId(configuration.getImage());
-        if (builtImage.isPresent()) {
-            configuration.fromImage(builtImage.get().getImageId());
-        }
+        return builtImage.isPresent() ? configuration.fromImage(builtImage.get().getImageId()) : configuration;
     }
 
     private void replaceLinkedContainerIdsWithStartedNames(final ContainerStartConfiguration configuration) {
