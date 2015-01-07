@@ -46,6 +46,10 @@ public class RemoteDockerProvider extends RemoteApiBasedDockerProvider {
         ContainerStartRequest startRequest = new ContainerStartRequest()
                 .withAllPortsPublished()
                 .withLinks(configuration.getLinks());
+        
+        if (configuration.isPrivileged()) {
+            startRequest.makePrivileged();
+        }
 
         return super.startContainer(configuration, startRequest);
     }

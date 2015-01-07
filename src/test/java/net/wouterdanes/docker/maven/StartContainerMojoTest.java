@@ -355,6 +355,38 @@ public class StartContainerMojoTest {
         assertEquals("test-hostname", passedValue.getHostname());
     }
 
+    @Test
+    public void testThatPrivilegedIsPassedToTheProvider() throws Exception {
+        ContainerStartConfiguration configuration = new ContainerStartConfiguration().asPrivileged();
+        StartContainerMojo mojo = createMojo(configuration);
+        
+        mojo.execute();
+
+        ArgumentCaptor<ContainerStartConfiguration> captor = ArgumentCaptor.forClass(ContainerStartConfiguration.class);
+        verify(FakeDockerProvider.instance).startContainer(captor.capture());
+
+        assert mojo.getPluginErrors().isEmpty();
+
+        ContainerStartConfiguration passedValue = captor.getValue();
+        assertEquals(true, passedValue.isPrivileged());
+    }
+
+    @Test
+    public void testThatPrivilegedIsNotPassedWhenNotPrivileged() throws Exception {
+        ContainerStartConfiguration configuration = new ContainerStartConfiguration();
+        StartContainerMojo mojo = createMojo(configuration);
+
+        mojo.execute();
+
+        ArgumentCaptor<ContainerStartConfiguration> captor = ArgumentCaptor.forClass(ContainerStartConfiguration.class);
+        verify(FakeDockerProvider.instance).startContainer(captor.capture());
+
+        assert mojo.getPluginErrors().isEmpty();
+
+        ContainerStartConfiguration passedValue = captor.getValue();
+        assertEquals(false, passedValue.isPrivileged());
+    }
+
     private StartContainerMojo createMojo(final ContainerStartConfiguration startConfiguration) {
         return createMojo(startConfiguration, FAKE_PROVIDER_KEY);
     }
