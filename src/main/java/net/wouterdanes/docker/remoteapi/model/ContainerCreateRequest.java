@@ -44,6 +44,8 @@ public class ContainerCreateRequest {
     private String image;
     @JsonProperty("Env")
     private List<String> env;
+    @JsonProperty("Ports")
+    private List<ContainerExposedPort> ports;
     
     public String getHostname() {
         return hostname;
@@ -64,11 +66,15 @@ public class ContainerCreateRequest {
     public String getImage() {
         return image;
     }
+    
+    public List<ContainerExposedPort> getPorts() {
+		return ports;
+	}
 
-    public List<String> getEnv() {
+	public List<String> getEnv() {
         return env != null ? Collections.unmodifiableList(env) : Collections.<String>emptyList();
     }
-
+    
     public ContainerCreateRequest withEnv(Map<String, String> env) {
     	if (env != null && env.size() > 0) {
 	    	this.env = new ArrayList<>();
@@ -89,6 +95,11 @@ public class ContainerCreateRequest {
         return this;
     }
 
+    public ContainerCreateRequest withPorts(List<ContainerExposedPort> ports) {
+        this.ports = ports;
+        return this;
+    }
+    
     public ContainerCreateRequest withMemory(long memory) {
         this.memory = memory;
         return this;

@@ -19,11 +19,13 @@ package net.wouterdanes.docker.provider;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import net.wouterdanes.docker.provider.model.ContainerStartConfiguration;
 import net.wouterdanes.docker.provider.model.ExposedPort;
+import net.wouterdanes.docker.remoteapi.model.ContainerExposedPort;
 import net.wouterdanes.docker.remoteapi.model.ContainerInspectionResult;
 import net.wouterdanes.docker.remoteapi.model.ContainerStartRequest;
 
@@ -43,16 +45,34 @@ public class RemoteDockerProvider extends RemoteApiBasedDockerProvider {
 
     @Override
     public ContainerInspectionResult startContainer(final ContainerStartConfiguration configuration) {
-        ContainerStartRequest startRequest = new ContainerStartRequest()
-                .withAllPortsPublished()
-                .withLinks(configuration.getLinks());
+
+    	ContainerStartRequest startRequest = new ContainerStartRequest()
+        .withLinks(configuration.getLinks());
+    	
+    	Map<String, List<Map<String, String>>> portBindings =  new HashMap<String, List<Map<String,String>>>();
+    	if (configuration.getPorts() != null && configuration.getPorts().size() > 0) {
+	    	for (ContainerExposedPort port : configuration.getPorts()) {
+	    	
+		    	Map<String, String> k = new HashMap<String, String>();
+		    	k.put("HostPort", String.valueOf(port.getPublicPort()));
+		
+		    	List<Map<String, String>> x = new ArrayList<Map<String,String>>();
+		    	x.add(k);
+		    	portBindings.put(port.getPrivatePort() + "/tcp", x);
+	    		
+	    	}
+	    	startRequest.withPortBindings(portBindings);	    	
+    	} else {
+    		startRequest.withAllPortsPublished();
+    	}
 
         return super.startContainer(configuration, startRequest);
     }
 
     @Override
     public List<ExposedPort> getExposedPorts(final String containerId) {
-        ContainerInspectionResult containerInspectionResult = getContainersService().inspectContainer(containerId);
+            	
+    	ContainerInspectionResult containerInspectionResult = getContainersService().inspectContainer(containerId);
         if (containerInspectionResult.getNetworkSettings().getPorts().isEmpty()) {
             return Collections.emptyList();
         }

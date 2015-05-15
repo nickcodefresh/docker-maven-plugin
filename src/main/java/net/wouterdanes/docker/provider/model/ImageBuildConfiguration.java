@@ -49,6 +49,9 @@ public class ImageBuildConfiguration {
 	@Parameter
 	private List<Artifact> artifacts;
 
+	@Parameter
+	private List<String> ports;
+	
     public String getId() {
         return id;
     }
@@ -104,4 +107,13 @@ public class ImageBuildConfiguration {
 	public void setDockerFile(File dockerFile) {
 		this.dockerFile = dockerFile;
 	}
+
+	public List<String> getPorts() {
+		return ports;
+	}
+
+	public void setPorts(List<String> ports) {
+		this.ports = ports;
+	}
+	
 }

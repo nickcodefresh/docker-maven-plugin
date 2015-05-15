@@ -61,6 +61,11 @@ public class MiscService extends BaseService {
      * @return the ID of the created image
      */
     public String buildImage(byte[] tarArchive, Optional<String> name) {
+    	
+    	System.out.println("XXXXXXXXXXX");
+    	System.out.println(getServiceEndPoint());
+    	
+    	
         String jsonStream = getServiceEndPoint()
                 .path("/build")
                 .queryParam("q", true)
